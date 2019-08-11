@@ -14,12 +14,15 @@ object EitherSuite extends SuiteLike("Either Suite") {
 
   private val combineTest = table("combine", combineTable)(t => t._1 combine t._2)  
 
-  private val combineExtendedTest = test("combine extended") {
-    (right(10) combine right(20) combine right(30)) =?= right(60) | "combine Right and Right and Right" and
-    (left[Int]("error1") combine right(20) combine right(30)) =?= left[Int]("error1") | "combine Left and Right and Right" and
-    (right(10) combine left[Int]("error1") combine right(30)) =?= left[Int]("error1") | "combine Right and Left and Right" and
-    (right(10) combine right(20) combine left[Int]("error1")) =?= left[Int]("error1") | "combine Right and Left and Left"
-  }
+  private val combineExtendTable = truthTable(
+    (right(10), right(20), right(30)) -> tval(right(60)),
+    (left[Int]("error1"), right(20), right(30)) -> tval(left[Int]("error1")),
+    (right(10), left[Int]("error1"), right(30)) -> tval(left[Int]("error1")),
+    (right(10), right(20), left[Int]("error1")) -> tval(left[Int]("error1")),
+    (left[Int]("error1"), left[Int]("error2"), left[Int]("error3")) -> tval(left[Int]("error1"))
+  )
+
+  private val combineExtendedTest = table("combineExtended", combineExtendTable)(t => t._1 combine t._2 combine t._3)
 
   private val combineKTable = truthTable(
     (right(10), right(20)) -> tval(right(10)),
