@@ -5,42 +5,53 @@ import cats.implicits._
 
 object EitherSuite extends SuiteLike("Either Suite") {
 
-  //similar to x.getOrElse(y) when there are nones, but combines both if present, as `A` is a Semigroup/Monoid
-  private val t1 = test("combine") {
-    (right(10) combine right(20)) =?= right(30) | "combine Right and Right" and
-    (right(10) combine left[Int]("error1")) =?= left[Int]("error1") | "combine Right and Left" and
-    (left[Int]("error1") combine right(20)) =?= left[Int]("error1") | "combine Left and Right" and
-    (left[Int]("error1") combine left[Int]("error2")) =?= left[Int]("error1") | "combine Left and Left" and
+  private   val combineTable = truthTable(
+    (right(10), right(20)) -> tval(right(30)),
+    (right(10), left[Int]("error1")) -> tval(left[Int]("error1")),
+    (left[Int]("error1"), right(20)) -> tval(left[Int]("error1")),
+    (left[Int]("error1"), left[Int]("error2")) -> tval(left[Int]("error1"))
+  )
+
+  private val combineTest = table("combine", combineTable)(t => t._1 combine t._2)  
+
+  private val combineExtendedTest = test("combine extended") {
     (right(10) combine right(20) combine right(30)) =?= right(60) | "combine Right and Right and Right" and
     (left[Int]("error1") combine right(20) combine right(30)) =?= left[Int]("error1") | "combine Left and Right and Right" and
     (right(10) combine left[Int]("error1") combine right(30)) =?= left[Int]("error1") | "combine Right and Left and Right" and
     (right(10) combine right(20) combine left[Int]("error1")) =?= left[Int]("error1") | "combine Right and Left and Left"
   }
 
-  // //similar to x.getOrElse(y)
-  private val t2 = test("combineK") {
-    (right(10) combineK right(20)) =?= right(10) | "combineK RightLeft and Right" and
-    (right(10) combineK left[Int]("error1")) =?= right(10) | "combineK Right and Left" and
-    (left[Int]("error1") combineK right(20)) =?= right(20) | "combineK Left and Right" and
-    (left[Int]("error1") combineK left[Int]("error2")) =?= left[Int]("error2") | "combineK Left and Right"
-  }
+  private val combineKTable = truthTable(
+    (right(10), right(20)) -> tval(right(10)),
+    (right(10), left[Int]("error1")) -> tval(right(10)),
+    (left[Int]("error1"), right(20)) -> tval(right(20)),
+    (left[Int]("error1"), left[Int]("error2")) -> tval(left[Int]("error2"))
+  )
 
-  // //product is similar to flatMap, in that any none leads to the full expression being none
-  private val t3 = test("productL") {
-    (right(10) productL right(20)) =?= right(10) | "productL Right and Right" and
-    (right(10) productL left[Int]("error1")) =?= left[Int]("error1") | "productL Right and Left" and
-    (left[Int]("error1") productL right(20)) =?= left[Int]("error1") | "productL Left and Right" and
-    (left[Int]("error1") productL left[Int]("error2")) =?= left[Int]("error1") | "productL Left and Right"
-  }
+  //similar to x.getOrElse(y)
+  private val combineKTest = table("combineK", combineKTable)(t => t._1 combineK t._2)
 
-  private val t4 = test("productR") {
-    (right(10) productR right(20)) =?= right(20) | "productR Right and Right" and
-    (right(10) productR left[Int]("error1")) =?= left[Int]("error1") | "productR Right and Left" and
-    (left[Int]("error1") productR right(20)) =?= left[Int]("error1") | "productR Left and Right" and
-    (left[Int]("error1") productR left[Int]("error2")) =?= left[Int]("error1") | "productR Left and Right"
-  }
 
-  override val tests = oneOrMore(t1, t2 ,t3, t4)
+  private val productLTable = truthTable(
+    (right(10), right(20)) -> tval(right(10)),
+    (right(10), left[Int]("error1")) -> tval(left[Int]("error1")),
+    (left[Int]("error1"), right(20)) -> tval(left[Int]("error1")),
+    (left[Int]("error1"), left[Int]("error2")) -> tval(left[Int]("error1"))
+  )
+
+  //product is similar to flatMap
+  private val productLTest = table("productL", productLTable)(t => t._1 productL t._2)
+
+  private val productRTable = truthTable(
+    (right(10), right(20)) -> tval(right(20)),
+    (right(10), left[Int]("error1")) -> tval(left[Int]("error1")),
+    (left[Int]("error1"), right(20)) -> tval(left[Int]("error1")),
+    (left[Int]("error1"), left[Int]("error2")) -> tval(left[Int]("error1"))
+  )
+
+  private val productRTest = table("productR", productRTable)(t => t._1 productR t._2)
+
+  override val tests = oneOrMore(combineTest, combineExtendedTest, combineKTest ,productLTest, productRTest)
 
   private def right[A](value: A): Either[String, A] = Right(value)
   
