@@ -6,6 +6,7 @@ import cats.implicits._
 
 object IOSuite extends SuiteLike("IO Suite") {
 
+  //temporary wrapper around IO as boon does not support side effects.
   sealed trait IOType[A]
   final case class IOSuccess[A](value: A) extends IOType[A]
   final case class IOError[A](value: String) extends IOType[A]
@@ -20,16 +21,6 @@ object IOSuite extends SuiteLike("IO Suite") {
   )
 
   private val combineTest = table("combine", combineTable)(io(_ combine _))
-
-  // private val combineExtendTable = truthTable(
-  //   (success(10), success(20), success(30)) -> tval(success(60)),
-  //   (error[Int]("error1"), success(20), success(30)) -> tval(error[Int]("error1")),
-  //   (success(10), error[Int]("error1"), success(30)) -> tval(error[Int]("error1")),
-  //   (success(10), success(20), error[Int]("error1")) -> tval(error[Int]("error1")),
-  //   (error[Int]("error1"), error[Int]("error2"), error[Int]("error3")) -> tval(error[Int]("error1"))
-  // )
-
-  // private val combineExtendedTest = table("combineExtended", combineExtendTable)(t => t._1 combine t._2 combine t._3)
 
   private val combineKTable = truthTable(
     (success(10), success(20)) -> tval(success(10)),
@@ -61,7 +52,7 @@ object IOSuite extends SuiteLike("IO Suite") {
 
   private val productRTest = table("productR", productRTable)(io(_ productR _))
 
-  override val tests = oneOrMore(combineTest/*, combineExtendedTest */, combineKTest ,productLTest, productRTest)
+  override val tests = oneOrMore(combineTest, combineKTest ,productLTest, productRTest)
 
   private def io[A, B, C](f: (IO[A], IO[B]) => IO[C])(t: Tuple2[IOType[A], IOType[B]]): IOType[C] = (t._1, t._2) match {
     case (IOSuccess(a), IOSuccess(b)) =>  runToIOType(f(IO(a), IO(b)))
